@@ -32,7 +32,6 @@ state_tick=false
 flag_update_screen=false
 
 param_loop_num_beats=1
-param_repeats=3 -- number of repeats
 param_final_rate=1
 param_final_level=1
 param_monitor=1
@@ -69,9 +68,8 @@ function init()
   timer:start()
   
   -- parameters
-  params:add_control("bpm","bpm",controlspec.new(10,300,"lin",1,90))
   params:add_control("beats","beats",controlspec.new(1,16,"lin",1,1))
-  params:add_control("repeat","repeat",controlspec.new(-1,100,"lin",1,3))
+  params:add_control("repeat","repeat",controlspec.new(1,10,"lin",1,3))
   params:add_control("rate","rate",controlspec.new(-4,4,"lin",1,0.1))
   params:add_control("level","level",controlspec.new(0,1,"lin",1,0.1))
   params:add_control("randomizer","randomizer",{"on","off"})
@@ -105,7 +103,7 @@ function timer_update()
       flag_update_screen=true
     end
     
-    if param_repeats<10 and state_current_time>=loop_length()*param_repeats then
+    if params:get("repeat")<10 and state_current_time>=loop_length()*params:get("repeat") then
       deactivate_basic()
     end
   end
@@ -128,7 +126,7 @@ function activate_basic(monitor_mode)
   if prev_position<1 then
     prev_position=1
   end
-  slew_rate=param_repeats*loop_length()*4
+  slew_rate=params:get("repeat")*loop_length()*4
   if slew_rate<0 then
     slew_rate=loop_length()
   end
@@ -174,7 +172,7 @@ function randomizer()
   end
   param_final_level=math.random(0,1)
   param_final_rate=math.random(-4,4)
-  param_repeats=round(math.random(1,5))
+  params:set("repeat",round(math.random(1,5)))
   param_loop_num_beats=round(math.random(1,8))
   monitor_mode=round(math.random())
   flag_update_screen=true
@@ -186,7 +184,7 @@ function enc(n,d)
   if n==1 then
     if state_shift then
     else
-      param_repeats=util.clamp(param_repeats+d,1,10)
+      params:set("repeat",util.clamp(params:get("repeat")+d,1,10))
     end
   elseif n==2 then
     if state_shift then
@@ -273,36 +271,36 @@ function redraw()
   x=2
   y=20
   h=40
-  w=math.floor((120-4*param_repeats)/param_repeats)
-  show_repeats=param_repeats
+  w=math.floor((120-4*params:get("repeat"))/params:get("repeat"))
+  show_repeats=params:get("repeat")
   if state_activated then
     show_repeats=state_repeat_number
   end
   for i=1,show_repeats do
     x=x+2
     screen.move(x,y)
-    if i==param_repeats then
+    if i==params:get("repeat") then
       screen.line(x+w*param_final_level,y+h)
     elseif i==1 then
       screen.line(x+w,y+h)
     else
-      screen.line(x+w-w*(1-param_final_level)/(param_repeats-1)*(i-1),y+h)
+      screen.line(x+w-w*(1-param_final_level)/(params:get("repeat")-1)*(i-1),y+h)
     end
     screen.stroke()
     screen.move(x+w,y)
     r1=(-1*1+4)/8
     r=(-1*param_final_rate+4)/8
-    if i==param_repeats then
+    if i==params:get("repeat") then
       screen.line(x+w*r,y+h)
     elseif i==1 then
       screen.line(x+w*r1,y+h)
     else
       if r<r1 then
-        screen.line(x+w-w*(r1*r)/(param_repeats-1)*(param_repeats-i+1),y+h)
+        screen.line(x+w-w*(r1*r)/(params:get("repeat")-1)*(params:get("repeat")-i+1),y+h)
       elseif r==r1 then
         screen.line(x+w*r,y+h)
       else
-        screen.line(x+w-w*(r-r1)/(param_repeats-1)*(param_repeats-i+1),y+h)
+        screen.line(x+w-w*(r-r1)/(params:get("repeat")-1)*(params:get("repeat")-i+1),y+h)
       end
     end
     screen.stroke()
