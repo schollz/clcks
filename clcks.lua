@@ -34,7 +34,6 @@ flag_update_screen=false
 param_loop_num_beats=1
 param_final_rate=1
 param_final_level=1
-param_monitor=1
 
 function init()
   audio.comp_mix(1) -- turn on compressor
