@@ -102,7 +102,7 @@ function timer_update()
     
     -- get beat number
     current_beat_number=state_beat_number
-    state_beat_number=1+math.floor(state_current_time/(60/param_bpm))%param_loop_num_beats
+    state_beat_number=1+math.floor(state_current_time/(60/param_bpm/param_loop_num_beats))%param_loop_num_beats
     if state_beat_number~=current_beat_number then
       flag_update_screen=true
     end
@@ -118,7 +118,7 @@ function timer_update()
 end
 
 function loop_length()
-  return 60/param_bpm*param_loop_num_beats
+  return 60/param_bpm/param_loop_num_beats
 end
 
 function activate_basic(monitor_mode)
