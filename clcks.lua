@@ -21,18 +21,18 @@
 --
 --
 
-state_activated=false
-state_current_time=0
-state_repeat_number=0
-state_beat_number=0
-state_current_position=0
-state_shift=false
-state_tick=false
-
-flag_update_screen=false
+state={
+  activated=false,
+  time=0,
+  repeats=0,
+  beat=0,
+  position=0,
+  shift=false,
+  tick=false,
+  update_screen=false,
+}
 
 function init()
-  audio.comp_mix(1) -- turn on compressor
   audio.level_adc_cut(1) -- send audio input to softcut input
   audio.level_monitor(1)
   
@@ -83,7 +83,7 @@ function update_clock(x)
 end
 
 function update_level(x)
-  if state_activated then
+  if state.activated then
     for i=1,2 do
       softcut.level(i,x)
     end
@@ -91,7 +91,7 @@ function update_level(x)
 end
 
 function update_rate(x)
-  if state_activated then
+  if state.activated then
     for i=1,2 do
       softcut.rate(i,x)
     end
@@ -99,33 +99,33 @@ function update_rate(x)
 end
 
 function update_positions(i,x)
-  state_current_position=x
+  state.position=x
 end
 
 function timer_update()
-  if state_activated then
-    state_current_time=state_current_time+const_time_per_refresh
-    state_tick=round(state_current_time/(60/params:get("clock_tempo")))%2==1
+  if state.activated then
+    state.time=state.time+const_time_per_refresh
+    state.tick=round(state.time/(60/params:get("clock_tempo")))%2==1
     
     -- get repeat number
-    current_repeat=state_repeat_number
-    state_repeat_number=math.floor(state_current_time/loop_length())
-    if state_repeat_number>current_repeat then
-      flag_update_screen=true
+    current_repeat=state.repeats
+    state.repeats=math.floor(state.time/loop_length())
+    if state.repeats>current_repeat then
+      state.update_screen=true
     end
     
     -- get beat number
-    current_beat_number=state_beat_number
-    state_beat_number=1+math.floor(state_current_time/(60/params:get("clock_tempo")/params:get("beats")))%params:get("beats")
-    if state_beat_number~=current_beat_number then
-      flag_update_screen=true
+    current_beat_number=state.beat
+    state.beat=1+math.floor(state.time/(loop_length()))%params:get("beats")
+    if state.beat~=current_beat_number then
+      state.update_screen=true
     end
     
-    if params:get("repeat")<10 and state_current_time>=loop_length()*params:get("repeat") then
+    if params:get("repeat")<10 and state.time>=loop_length()*params:get("repeat") then
       deactivate_basic()
     end
   end
-  if flag_update_screen then
+  if state.update_screen then
     redraw()
   end
 end
@@ -135,11 +135,11 @@ function loop_length()
 end
 
 function activate_basic(monitor_mode)
-  if state_activated then
+  if state.activated then
     deactivate_basic()
     do return end
   end
-  current_position=state_current_position
+  current_position=state.position
   prev_position=current_position-loop_length()
   if prev_position<1 then
     prev_position=1
@@ -160,19 +160,19 @@ function activate_basic(monitor_mode)
     softcut.rate(i,params:get("rate"))
     softcut.level(i,params:get("level"))
   end
-  state_current_time=0
-  state_repeat_number=0
-  state_activated=true
-  flag_update_screen=true
+  state.time=0
+  state.repeats=0
+  state.activated=true
+  state.update_screen=true
 end
 
 function deactivate_basic()
   print("deactivated")
-  state_activated=false
+  state.activated=false
   audio.level_monitor(1)
   for i=1,2 do
     softcut.rec(i,1) -- start recording
-    softcut.position(i,state_current_position+1)
+    softcut.position(i,state.position+1)
     softcut.loop_start(i,1)
     softcut.loop_end(i,300)
     softcut.rate_slew_time(i,0)
@@ -180,7 +180,7 @@ function deactivate_basic()
     softcut.rate(i,1)
     softcut.level(i,1)
   end
-  flag_update_screen=true
+  state.update_screen=true
 end
 
 function randomizer()
@@ -193,25 +193,25 @@ function randomizer()
   params:set("repeat",round(math.random(1,5)))
   params:set("beats",round(math.random(1,8)))
   monitor_mode=round(math.random())
-  flag_update_screen=true
+  state.update_screen=true
   activate_basic(monitor_mode)
   clock.run(randomizer)
 end
 
 function enc(n,d)
   if n==1 then
-    if state_shift then
+    if state.shift then
     else
       params:set("repeat",util.clamp(params:get("repeat")+d,1,10))
     end
   elseif n==2 then
-    if state_shift then
+    if state.shift then
       params:set("clock_tempo",util.clamp(params:get("clock_tempo")+d,10,500))
     else
       params:set("level",util.clamp(params:get("level")+d/100,0,1))
     end
   elseif n==3 then
-    if state_shift then
+    if state.shift then
       params:set("beats",util.clamp(params:get("beats")+d,1,16))
     else
       -- turning ccw sets to reverse
@@ -219,12 +219,12 @@ function enc(n,d)
       params:set("rate",d*util.clamp(params:get("rate")+d/100,0,4))
     end
   end
-  flag_update_screen=true
+  state.update_screen=true
 end
 
 function key(n,z)
   if n==2 and z==1 then
-    if state_shift then
+    if state.shift then
       -- reset final parameters
       params:set("randomizer","off")
       params:set("rate",1)
@@ -234,7 +234,7 @@ function key(n,z)
       activate_basic(1)
     end
   elseif n==3 and z==1 then
-    if state_shift then
+    if state.shift then
       -- randomize chop
       params:set("randomizer","on")
       clock.run(randomizer)
@@ -243,16 +243,16 @@ function key(n,z)
       activate_basic(0)
     end
   elseif n==1 then
-    state_shift=z==1
+    state.shift=z==1
   end
-  flag_update_screen=true
+  state.update_screen=true
 end
 
 function redraw()
-  flag_update_screen=false
+  state.update_screen=false
   screen.clear()
   shift_amount=0
-  if state_shift then
+  if state.shift then
     shift_amount=4
   end
   
@@ -266,7 +266,7 @@ function redraw()
   y=4+shift_amount
   w=3
   show_beats=params:get("beats")
-  if state_activated then
+  if state.activated then
     show_beats=current_beat_number
   end
   for i=1,show_beats do
@@ -282,8 +282,8 @@ function redraw()
   h=40
   w=math.floor((120-4*params:get("repeat"))/params:get("repeat"))
   show_repeats=params:get("repeat")
-  if state_activated then
-    show_repeats=state_repeat_number
+  if state.activated then
+    show_repeats=state.repeats
   end
   short_hand_angle=180*math.abs(params:get("rate"))/4+90
   
@@ -292,7 +292,7 @@ function redraw()
     r=r+(w/2)*(1-(params:get("repeat")-i)/(params:get("repeat")-1))*params:get("level")
     if i==1 then
       r=(w/2)
-    elseif i==state_repeat_number then
+    elseif i==state.repeats then
       r=(w/2)*params:get("level")
     end
     
@@ -331,7 +331,7 @@ function metro_icon(x,y)
   screen.line(x+3,y+5)
   screen.stroke()
   screen.move(x+7,y+3)
-  screen.line(state_tick and (x+4) or (x+10),y)
+  screen.line(state.tick and (x+4) or (x+10),y)
   screen.stroke()
 end
 
