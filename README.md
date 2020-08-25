@@ -4,7 +4,9 @@ a tempo-locked repeat.
 
 ![image or video]()
 
-this is a tempo-locked repeater or "stutter" effect, inspired by the op-1's "break" and "chop" [tape tricks](https://teenage.engineering/guides/op-1/tape-mode). the "chop" on the op-1 does not in time with the audio, so i aim to do that here. using softcut, this repeat effect can also be pitched up/down and leveled up/down in realtime, meaning you can also get the "break" effect by setting the final level&pitch down.
+this is a tempo-locked repeater or "stutter" effect. this effect is inspired by the op-1's "break" and "chop" [tape tricks](https://teenage.engineering/guides/op-1/tape-mode). i like "chop" but the op-1 stops the playing loop when this effect is activated. for *xxx* i wanted a similar effect without stopping the playing loop.
+
+i also used softcut to improve the "chop" effect, by allowing it to be pitched up/down and leveled up/down in realtime. this gives all sorts of new effects, including getting the "break" (tape stop) effect by setting the final level&pitch down.
 
 
 ### Requirements
@@ -26,7 +28,9 @@ this is a tempo-locked repeater or "stutter" effect, inspired by the op-1's "bre
 - shift+K2 resets parameters
 - shift+K3 randomizes
 
+other notes:
 
+- repeats >9 means infinite repeating, so you have to toggle off with K2 or K3
 
 ## license 
 
