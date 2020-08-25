@@ -1,5 +1,5 @@
 -- xxx v0.1
--- temporal accessibility adjuster
+-- tempo-locked repeat
 --
 -- llllllll.co/t/xxx
 --
@@ -7,8 +7,19 @@
 --
 --    ▼ instructions below ▼
 --
+-- press K2 or K3 to activate
+-- press K2 or K3 to deactivate
+-- (K2 keeps monitoring audio)
+-- E1 changes repeat number
+-- E2&E2 change final level&rate
 --
--- hold K1 & press K2 to record,
+-- hold K1 to shift
+-- shift+E2 changes bpm
+-- shift+E3 changes beat subdivision
+-- shift+K2 resets parameters
+-- shift+K3 randomizes
+--
+--
 
 state_activated=false
 state_current_time=0
@@ -20,9 +31,9 @@ state_tick=false
 
 flag_update_screen=false
 
-param_bpm=125
+param_bpm=120
 param_loop_num_beats=1
-param_repeats=10 -- number of repeats
+param_repeats=3 -- number of repeats
 param_final_rate=1
 param_final_level=1
 param_monitor=1
@@ -221,14 +232,13 @@ end
 function redraw()
   flag_update_screen=false
   screen.clear()
-  screen.move(2,8)
+  shift_amount=0
   if state_shift then
-    screen.move(4,10)
+    shift_amount=4
   end
-  screen.text("xxx")
-  screen.move(20,8)
+  screen.move(3+shift_amount,8+shift_amount)
   screen.text(param_bpm)
-  metro_icon(33,3)
+  metro_icon(16+shift_amount,3+shift_amount)
   x=2
   y=20
   h=40
@@ -267,8 +277,8 @@ function redraw()
     screen.stroke()
     x=x+w+2
   end
-  x=50
-  y=4
+  x=34+shift_amount
+  y=4+shift_amount
   w=3
   show_beats=param_loop_num_beats
   if state_activated then
