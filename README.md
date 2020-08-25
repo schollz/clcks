@@ -22,7 +22,7 @@ future plans: add ping-pong panning?
 - press K2 or K3 to deactivate
 - (K2 keeps monitoring audio)
 - E1 changes repeat number
-- E2&E2 change final level&rate
+- E2/E3 change final level/rate
 - hold K1 to shift
 - shift+E2 changes tempo
 - shift+E3 changes beat subdivision
@@ -32,6 +32,7 @@ future plans: add ping-pong panning?
 other notes:
 
 - repeats >9 means infinite repeating, so you have to toggle off with K2 or K3
+- adjusting rate (E3) adjusts absolute rate, and the direction (cw/ccw) adjusts forward/reverse
 
 ## my other patches
 

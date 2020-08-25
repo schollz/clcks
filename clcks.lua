@@ -11,7 +11,7 @@
 -- press K2 or K3 to deactivate
 -- (K2 keeps monitoring audio)
 -- E1 changes repeat number
--- E2&E2 change final level&rate
+-- E2/E3 change final level/rate
 --
 -- hold K1 to shift
 -- shift+E2 changes bpm
