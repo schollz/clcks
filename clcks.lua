@@ -1,7 +1,7 @@
 -- clcks v0.1
 -- tempo-locked repeat
 --
--- llllllll.co/t/xxx
+-- llllllll.co/t/clcks
 --
 --
 --
