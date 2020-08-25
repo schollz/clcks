@@ -1,5 +1,5 @@
 -- xxx v0.1
--- time accessibility adjuster
+-- temporal accessibility adjuster
 --
 -- llllllll.co/t/xxx
 --
@@ -17,7 +17,9 @@ state_current_position=0
 
 flag_update_screen=false
 
-param_loop_length=0.5 -- seconds
+param_bpm=90
+param_loop_num_beats=1
+param_loop_length=60/param_bpm*param_loop_num_beats -- seconds
 param_repeats=-1 -- number of repeats
 param_final_rate=1
 param_final_level=1
@@ -55,6 +57,14 @@ function init()
   timer.event=timer_update
   timer:start()
   
+  -- parameters
+  params:add_control("bpm","bpm",controlspec.new(10,300,"lin",1,90))
+  params:add_control("beats","beats",controlspec.new(1,16,"lin",1,1))
+  params:add_control("repeat","repeat",controlspec.new(-1,100,"lin",1,3))
+  params:add_control("rate","rate",controlspec.new(-4,4,"lin",1,0.1))
+  params:add_control("level","level",controlspec.new(0,1,"lin",1,0.1))
+  params:add_control("monitor","monitor",{"on","off"})
+  
   -- POSITION POLL
   softcut.phase_quant(1,0.025)
   softcut.event_phase(update_positions)
@@ -82,10 +92,14 @@ function timer_update()
   elseif state_activated then
     state_current_time=state_current_time+const_time_per_refresh
     print(state_current_time)
-    if param_repeats>0 and state_current_time>=param_loop_length*param_repeats then
+    if param_repeats>0 and state_current_time>=loop_length()*param_repeats then
       deactivate_basic()
     end
   end
+end
+
+function loop_length()
+  return 60/params:get("bpm")*params:get("beats")
 end
 
 function activate_basic()
@@ -94,13 +108,13 @@ function activate_basic()
     do return end
   end
   current_position=state_current_position
-  prev_position=current_position-param_loop_length
+  prev_position=current_position-loop_length()
   if prev_position<1 then
     prev_position=1
   end
-  slew_rate=param_repeats*param_loop_length
+  slew_rate=param_repeats*loop_length()
   if slew_rate<0 then
-    slew_rate=param_loop_length
+    slew_rate=loop_length()
   end
   print(current_position,prev_position)
   audio.level_monitor(param_monitor)
@@ -117,6 +131,7 @@ function activate_basic()
   state_current_time=0
   state_repeat_number=0
   state_activated=true
+  flag_update_screen=true
 end
 
 function deactivate_basic()
@@ -132,6 +147,7 @@ function deactivate_basic()
   softcut.pan_slew_time(1,0)
   softcut.rate(1,1)
   softcut.level(1,1)
+  flag_update_screen=true
 end
 
 function enc(n,d)
@@ -146,6 +162,7 @@ function enc(n,d)
       softcut.rate(1,param_final_rate)
     end
   end
+  flag_update_screen=true
 end
 
 function key(n,z)
