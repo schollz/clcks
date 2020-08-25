@@ -32,7 +32,7 @@ state_tick=false
 flag_update_screen=false
 
 param_bpm=120
-param_loop_num_beats=16
+param_loop_num_beats=1
 param_repeats=3 -- number of repeats
 param_final_rate=1
 param_final_level=1
@@ -129,7 +129,7 @@ function timer_update()
 end
 
 function loop_length()
-  return 60/param_bpm/param_loop_num_beats/16
+  return 60/param_bpm/param_loop_num_beats
 end
 
 function activate_basic(monitor_mode)
