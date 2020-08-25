@@ -280,7 +280,7 @@ function redraw()
   x=2
   y=20
   h=40
-  w=math.floor((120-4*params:get("repeat"))/params:get("repeat"))
+  w=round(120/params:get("repeat"))
   show_repeats=params:get("repeat")
   if state.activated then
     show_repeats=state.repeats
@@ -295,6 +295,7 @@ function redraw()
     elseif i==state.repeats then
       r=(w/2)*params:get("level")
     end
+    r=r+2
     
     -- draw "circle"
     center={x+w/2,y+w/2}
@@ -314,6 +315,9 @@ function redraw()
       angle=360-angle
     end
     screen.arc(center[1],center[2],r,angle,angle)
+    
+    -- update x position
+    x=x+w -- TODO: try using r instead
   end
   
   screen.update()
