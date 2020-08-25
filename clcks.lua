@@ -277,46 +277,44 @@ function redraw()
   end
   
   -- draw clocks
+  x=2
+  y=20
+  h=40
+  w=math.floor((120-4*params:get("repeat"))/params:get("repeat"))
+  show_repeats=params:get("repeat")
+  if state_activated then
+    show_repeats=state_repeat_number
+  end
+  short_hand_angle=180*math.abs(params:get("rate"))/4+90
   
-  -- -- draw x's
-  -- x=2
-  -- y=20
-  -- h=40
-  -- w=math.floor((120-4*params:get("repeat"))/params:get("repeat"))
-  -- show_repeats=params:get("repeat")
-  -- if state_activated then
-  --   show_repeats=state_repeat_number
-  -- end
-  -- for i=1,show_repeats do
-  --   x=x+2
-  --   screen.move(x,y)
-  --   if i==params:get("repeat") then
-  --     screen.line(x+w*params:get("level"),y+h)
-  --   elseif i==1 then
-  --     screen.line(x+w,y+h)
-  --   else
-  --     screen.line(x+w-w*(1-params:get("level"))/(params:get("repeat")-1)*(i-1),y+h)
-  --   end
-  --   screen.stroke()
-  --   screen.move(x+w,y)
-  --   r1=(-1*1+4)/8
-  --   r=(-1*params:get("rate")+4)/8
-  --   if i==params:get("repeat") then
-  --     screen.line(x+w*r,y+h)
-  --   elseif i==1 then
-  --     screen.line(x+w*r1,y+h)
-  --   else
-  --     if r<r1 then
-  --       screen.line(x+w-w*(r1*r)/(params:get("repeat")-1)*(params:get("repeat")-i+1),y+h)
-  --     elseif r==r1 then
-  --       screen.line(x+w*r,y+h)
-  --     else
-  --       screen.line(x+w-w*(r-r1)/(params:get("repeat")-1)*(params:get("repeat")-i+1),y+h)
-  --     end
-  --   end
-  --   screen.stroke()
-  --   x=x+w+2
-  -- end
+  for i=1,show_repeats do
+    r=(w/2)*(params:get("repeat")-i)/(params:get("repeat")-1)
+    r=r+(w/2)*(1-(params:get("repeat")-i)/(params:get("repeat")-1))*params:get("level")
+    if i==1 then
+      r=(w/2)
+    elseif i==state_repeat_number then
+      r=(w/2)*params:get("level")
+    end
+    
+    -- draw "circle"
+    center={x+w/2,y+w/2}
+    screen.move(center[1],y)
+    screen.curve(center[1],y+h,center[1]-r,y,center[1]-r,y+h)
+    screen.stroke()
+    screen.move(center[1],y)
+    screen.curve(center[1],y+h,center[1]+r,y,center[1]+r,y+h)
+    screen.stroke()
+    
+    -- short hand indicates absolute rate
+    screen.arc(center[1],center[2],r/2,short_hand_angle,short_hand_angle)
+    
+    -- long hand indicates direction of rate
+    angle=(i-1)*36
+    if params:get("rate")<0 then
+      angle=360-angle
+    end
+    screen.arc(center[1],center[2],r,angle,angle)
+  end
   
   screen.update()
 end
