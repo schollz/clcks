@@ -13,14 +13,16 @@
 state_activated=false
 state_current_time=0
 state_repeat_number=0
+state_beat_number=0
 state_current_position=0
+state_shift=false
+state_tick=false
 
 flag_update_screen=false
 
-param_bpm=90
+param_bpm=125
 param_loop_num_beats=1
-param_loop_length=60/param_bpm*param_loop_num_beats -- seconds
-param_repeats=-1 -- number of repeats
+param_repeats=10 -- number of repeats
 param_final_rate=1
 param_final_level=1
 param_monitor=1
@@ -87,22 +89,39 @@ function timer_update()
   -- params=softcut.params()
   -- print(dump(params[1].position.controlspec.warp))
   -- only use timer when state is activated
-  if flag_update_screen then
-    redraw()
-  elseif state_activated then
+  if state_activated then
     state_current_time=state_current_time+const_time_per_refresh
-    print(state_current_time)
-    if param_repeats>0 and state_current_time>=loop_length()*param_repeats then
+    state_tick=math.floor(state_current_time/(60/param_bpm))%2==1
+    
+    -- get repeat number
+    current_repeat=state_repeat_number
+    state_repeat_number=math.floor(state_current_time/loop_length())
+    if state_repeat_number>current_repeat then
+      flag_update_screen=true
+    end
+    
+    -- get beat number
+    current_beat_number=state_beat_number
+    state_beat_number=1+math.floor(state_current_time/(60/param_bpm))%param_loop_num_beats
+    if state_beat_number~=current_beat_number then
+      flag_update_screen=true
+    end
+    
+    print("a",state_current_time,loop_length()*param_repeats,state_tick)
+    if param_repeats<10 and state_current_time>=loop_length()*param_repeats then
       deactivate_basic()
     end
+  end
+  if flag_update_screen then
+    redraw()
   end
 end
 
 function loop_length()
-  return 60/params:get("bpm")*params:get("beats")
+  return 60/param_bpm*param_loop_num_beats
 end
 
-function activate_basic()
+function activate_basic(monitor_mode)
   if state_activated then
     deactivate_basic()
     do return end
@@ -112,12 +131,12 @@ function activate_basic()
   if prev_position<1 then
     prev_position=1
   end
-  slew_rate=param_repeats*loop_length()
+  slew_rate=param_repeats*loop_length()*4
   if slew_rate<0 then
     slew_rate=loop_length()
   end
   print(current_position,prev_position)
-  audio.level_monitor(param_monitor)
+  audio.level_monitor(monitor_mode)
   softcut.rec(1,0) -- stop recording
   softcut.level(1,1) -- start playing
   softcut.position(1,prev_position)
@@ -151,15 +170,28 @@ function deactivate_basic()
 end
 
 function enc(n,d)
-  if n==2 then
-    param_final_level=util.clamp(param_final_level+d/100,0,1)
-    if state_activated then
-      softcut.level(1,param_final_level)
+  if n==1 then
+    if state_shift then
+    else
+      param_repeats=util.clamp(param_repeats+d,1,10)
+    end
+  elseif n==2 then
+    if state_shift then
+      param_bpm=util.clamp(param_bpm+d,10,500)
+    else
+      param_final_level=util.clamp(param_final_level+d/100,0,1)
+      if state_activated then
+        softcut.level(1,param_final_level)
+      end
     end
   elseif n==3 then
-    param_final_rate=util.clamp(param_final_rate+d/100,-4,4)
-    if state_activated then
-      softcut.rate(1,param_final_rate)
+    if state_shift then
+      param_loop_num_beats=util.clamp(param_loop_num_beats+d,1,16)
+    else
+      param_final_rate=util.clamp(param_final_rate+d/100,-4,4)
+      if state_activated then
+        softcut.rate(1,param_final_rate)
+      end
     end
   end
   flag_update_screen=true
@@ -167,12 +199,102 @@ end
 
 function key(n,z)
   if n==2 and z==1 then
-    -- initiate
-    activate_basic()
+    if state_shift then
+      param_final_rate=1
+      param_final_level=1
+    else
+      -- initiate
+      activate_basic(1)
+    end
+  elseif n==3 and z==1 then
+    if state_shift then
+      -- TODO: randomize final rate/level
+    else
+      activate_basic(0)
+    end
+  elseif n==1 then
+    state_shift=z==1
   end
+  flag_update_screen=true
 end
 
 function redraw()
+  flag_update_screen=false
   screen.clear()
-  
+  screen.move(2,8)
+  if state_shift then
+    screen.move(4,10)
+  end
+  screen.text("xxx")
+  screen.move(20,8)
+  screen.text(param_bpm)
+  metro_icon(33,3)
+  x=2
+  y=20
+  h=40
+  w=math.floor((120-4*param_repeats)/param_repeats)
+  show_repeats=param_repeats
+  if state_activated then
+    show_repeats=state_repeat_number
+  end
+  for i=1,show_repeats do
+    x=x+2
+    screen.move(x,y)
+    if i==param_repeats then
+      screen.line(x+w*param_final_level,y+h)
+    elseif i==1 then
+      screen.line(x+w,y+h)
+    else
+      screen.line(x+w-w*(1-param_final_level)/(param_repeats-1)*(i-1),y+h)
+    end
+    screen.stroke()
+    screen.move(x+w,y)
+    r1=(-1*1+4)/8
+    r=(-1*param_final_rate+4)/8
+    if i==param_repeats then
+      screen.line(x+w*r,y+h)
+    elseif i==1 then
+      screen.line(x+w*r1,y+h)
+    else
+      if r<r1 then
+        screen.line(x+w-w*(r1*r)/(param_repeats-1)*(param_repeats-i+1),y+h)
+      elseif r==r1 then
+        screen.line(x+w*r,y+h)
+      else
+        screen.line(x+w-w*(r-r1)/(param_repeats-1)*(param_repeats-i+1),y+h)
+      end
+    end
+    screen.stroke()
+    x=x+w+2
+  end
+  x=50
+  y=4
+  w=3
+  show_beats=param_loop_num_beats
+  if state_activated then
+    show_beats=current_beat_number
+  end
+  for i=1,show_beats do
+    screen.move(x,y)
+    screen.rect(x,y,w,w)
+    screen.stroke()
+    x=x+w+2
+  end
+  screen.update()
+end
+
+--- Creates icon to show beat relative to interval.
+-- Thenk you @itsyourbedtime for creating this for Takt!
+-- @tparam x {number}  X-coordinate of element
+-- @tparam y {number}  Y-coordinate of element
+-- @tparam tick {boolean}
+function metro_icon(x,y)
+  screen.move(x+2,y+5)
+  screen.line(x+7,y)
+  screen.line(x+12,y+5)
+  screen.line(x+3,y+5)
+  screen.stroke()
+  screen.move(x+7,y+3)
+  screen.line(state_tick and (x+4) or (x+10),y)
+  screen.stroke()
 end
