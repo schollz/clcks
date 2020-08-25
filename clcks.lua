@@ -277,7 +277,7 @@ function redraw()
   end
   
   -- draw clocks
-  x=2
+  x=2 -- x, y are the top left hand point
   y=20
   h=40
   w=round(120/params:get("repeat"))
@@ -286,18 +286,20 @@ function redraw()
     show_repeats=state.repeats
   end
   short_hand_angle=180*math.abs(params:get("rate"))/4+90
-  
+  rinitial=w/2
+  rfinal=w/2*params:get("level")
   for i=1,show_repeats do
-    r=(w/2)*(params:get("repeat")-i)/(params:get("repeat")-1)
-    r=r+(w/2)*(1-(params:get("repeat")-i)/(params:get("repeat")-1))*params:get("level")
+    -- default: interpolate level between beginning and end
+    r=rinitial*(params:get("repeat")-i)/(params:get("repeat")-1)
+    r=r+rfinal*(1-(params:get("repeat")-i)/(params:get("repeat")-1))
     if i==1 then
-      r=(w/2)
+      r=rinitial
     elseif i==state.repeats then
-      r=(w/2)*params:get("level")
+      r=rfinal
     end
     r=r+2
     
-    -- draw "circle"
+    -- draw ellipse with short radius showing interpolated level
     center={x+w/2,y+w/2}
     screen.move(center[1],y)
     screen.curve(center[1],y+h,center[1]-r,y,center[1]-r,y+h)
