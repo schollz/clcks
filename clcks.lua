@@ -214,7 +214,9 @@ function enc(n,d)
     if state_shift then
       params:set("beats",util.clamp(params:get("beats")+d,1,16))
     else
-      params:set("rate",util.clamp(params:get("rate")+d/100,0,4))
+      -- turning ccw sets to reverse
+      -- turning cw sets to forward
+      params:set("rate",d*util.clamp(params:get("rate")+d/100,0,4))
     end
   end
   flag_update_screen=true
@@ -274,45 +276,47 @@ function redraw()
     x=x+w+2
   end
   
-  -- draw x's
-  x=2
-  y=20
-  h=40
-  w=math.floor((120-4*params:get("repeat"))/params:get("repeat"))
-  show_repeats=params:get("repeat")
-  if state_activated then
-    show_repeats=state_repeat_number
-  end
-  for i=1,show_repeats do
-    x=x+2
-    screen.move(x,y)
-    if i==params:get("repeat") then
-      screen.line(x+w*params:get("level"),y+h)
-    elseif i==1 then
-      screen.line(x+w,y+h)
-    else
-      screen.line(x+w-w*(1-params:get("level"))/(params:get("repeat")-1)*(i-1),y+h)
-    end
-    screen.stroke()
-    screen.move(x+w,y)
-    r1=(-1*1+4)/8
-    r=(-1*params:get("rate")+4)/8
-    if i==params:get("repeat") then
-      screen.line(x+w*r,y+h)
-    elseif i==1 then
-      screen.line(x+w*r1,y+h)
-    else
-      if r<r1 then
-        screen.line(x+w-w*(r1*r)/(params:get("repeat")-1)*(params:get("repeat")-i+1),y+h)
-      elseif r==r1 then
-        screen.line(x+w*r,y+h)
-      else
-        screen.line(x+w-w*(r-r1)/(params:get("repeat")-1)*(params:get("repeat")-i+1),y+h)
-      end
-    end
-    screen.stroke()
-    x=x+w+2
-  end
+  -- draw clocks
+  
+  -- -- draw x's
+  -- x=2
+  -- y=20
+  -- h=40
+  -- w=math.floor((120-4*params:get("repeat"))/params:get("repeat"))
+  -- show_repeats=params:get("repeat")
+  -- if state_activated then
+  --   show_repeats=state_repeat_number
+  -- end
+  -- for i=1,show_repeats do
+  --   x=x+2
+  --   screen.move(x,y)
+  --   if i==params:get("repeat") then
+  --     screen.line(x+w*params:get("level"),y+h)
+  --   elseif i==1 then
+  --     screen.line(x+w,y+h)
+  --   else
+  --     screen.line(x+w-w*(1-params:get("level"))/(params:get("repeat")-1)*(i-1),y+h)
+  --   end
+  --   screen.stroke()
+  --   screen.move(x+w,y)
+  --   r1=(-1*1+4)/8
+  --   r=(-1*params:get("rate")+4)/8
+  --   if i==params:get("repeat") then
+  --     screen.line(x+w*r,y+h)
+  --   elseif i==1 then
+  --     screen.line(x+w*r1,y+h)
+  --   else
+  --     if r<r1 then
+  --       screen.line(x+w-w*(r1*r)/(params:get("repeat")-1)*(params:get("repeat")-i+1),y+h)
+  --     elseif r==r1 then
+  --       screen.line(x+w*r,y+h)
+  --     else
+  --       screen.line(x+w-w*(r-r1)/(params:get("repeat")-1)*(params:get("repeat")-i+1),y+h)
+  --     end
+  --   end
+  --   screen.stroke()
+  --   x=x+w+2
+  -- end
   
   screen.update()
 end
