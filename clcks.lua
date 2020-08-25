@@ -31,7 +31,6 @@ state_tick=false
 
 flag_update_screen=false
 
-param_randomizer="off"
 param_loop_num_beats=1
 param_repeats=3 -- number of repeats
 param_final_rate=1
@@ -75,7 +74,7 @@ function init()
   params:add_control("repeat","repeat",controlspec.new(-1,100,"lin",1,3))
   params:add_control("rate","rate",controlspec.new(-4,4,"lin",1,0.1))
   params:add_control("level","level",controlspec.new(0,1,"lin",1,0.1))
-  params:add_control("monitor","monitor",{"on","off"})
+  params:add_control("randomizer","randomizer",{"on","off"})
   
   -- position poll
   softcut.phase_quant(1,0.025) -- monitor one position to get both
@@ -170,7 +169,7 @@ end
 
 function randomizer()
   clock.sleep(math.random(0,10))
-  if param_randomizer=="off" then
+  if params:get("randomizer")=="off" then
     do return end
   end
   param_final_level=math.random(0,1)
@@ -220,7 +219,7 @@ function key(n,z)
   if n==2 and z==1 then
     if state_shift then
       -- reset final parameters
-      param_randomizer="off"
+      params:set("randomizer","off")
       param_final_rate=1
       param_final_level=1
     else
@@ -230,7 +229,7 @@ function key(n,z)
   elseif n==3 and z==1 then
     if state_shift then
       -- randomize chop
-      param_randomizer="on"
+      params:set("randomizer","on")
       clock.run(randomizer)
     else
       -- initate without monitor mode
