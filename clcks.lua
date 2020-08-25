@@ -56,24 +56,26 @@ function init()
     softcut.rec(i,1) -- always be recording
   end
   
+  -- initialize timer
   timer=metro.init()
   timer.time=60/params:get("clock_tempo")/16
   timer.count=-1
-  timer.event=timer_update
+  timer.event=update_timer
   timer:start()
   
-  -- parameters
+  -- set parameters
   params:set_action("clock_tempo",update_clock)
   params:add_control("beats","beats",controlspec.new(1,16,"lin",1,1))
   params:add_control("repeat","repeat",controlspec.new(1,10,"lin",1,3))
-  params:add_control("rate","rate",controlspec.new(0,4,"lin",1,0.1))
+  params:add_control("rate","rate",controlspec.new(-4,4,"lin",1,0.1))
   params:set_action("rate",update_rate)
   params:add_control("level","level",controlspec.new(0,1,"lin",1,0.1))
   params:set_action("level",update_level)
   params:add_control("randomizer","randomizer",{"on","off"})
   
   -- position poll
-  softcut.phase_quant(1,0.025) -- monitor one position to get both
+  -- monitor one position to get both, since they are synced
+  softcut.phase_quant(1,0.025)
   softcut.event_phase(update_positions)
   softcut.poll_start_phase()
 end
@@ -102,7 +104,7 @@ function update_positions(i,x)
   state.position=x
 end
 
-function timer_update()
+function update_timer()
   if state.activated then
     state.time=state.time+const_time_per_refresh
     state.tick=round(state.time/(60/params:get("clock_tempo")))%2==1
@@ -216,7 +218,7 @@ function enc(n,d)
     else
       -- turning ccw sets to reverse
       -- turning cw sets to forward
-      params:set("rate",d*util.clamp(params:get("rate")+d/100,0,4))
+      params:set("rate",sign(d)*math.abs(util.clamp(params:get("rate")+d/100,-4,4)))
     end
   end
   state.update_screen=true
@@ -250,7 +252,10 @@ end
 
 function redraw()
   state.update_screen=false
+  
   screen.clear()
+  
+  -- check shift
   shift_amount=0
   if state.shift then
     shift_amount=4
@@ -350,5 +355,13 @@ function round(num)
     return under
   else
     return upper
+  end
+end
+
+function sign(num)
+  if num<0 then
+    return-1
+  else
+    return 1
   end
 end
