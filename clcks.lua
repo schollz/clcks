@@ -1,4 +1,4 @@
--- xxx v0.1
+-- clcks v0.1
 -- tempo-locked repeat
 --
 -- llllllll.co/t/xxx
@@ -45,22 +45,23 @@ function init()
   
   -- initialize softcut
   softcut.buffer_clear()
-  softcut.enable(1,1)
-  softcut.level(1,1)
-  softcut.buffer(1,1)
-  softcut.loop(1,1)
-  softcut.loop_start(1,1)
-  softcut.loop_end(1,300)
-  softcut.position(1,1)
-  softcut.play(1,1)
-  softcut.rate_slew_time(1,0)
-  softcut.level_slew_time(1,0)
-  softcut.pan_slew_time(1,0)
-  softcut.rec_level(1,1.0)
-  softcut.pre_level(1,0.0)
-  softcut.level_input_cut(1,1,1.0)
-  softcut.level_input_cut(2,1,1.0)
-  softcut.rec(1,1) -- always be recording
+  for i=1,2 do
+    softcut.enable(i,1)
+    softcut.level(i,1)
+    softcut.buffer(i,i) -- l&r use buffers 1&2
+    softcut.loop(i,1)
+    softcut.loop_start(i,1)
+    softcut.loop_end(i,300)
+    softcut.position(i,1)
+    softcut.play(i,1)
+    softcut.rate_slew_time(i,0)
+    softcut.level_slew_time(i,0)
+    softcut.pan(i,(i-1)*2-1) --stereo
+    softcut.rec_level(i,1.0)
+    softcut.pre_level(i,0.0)
+    softcut.level_input_cut(i,i,1.0)
+    softcut.rec(i,1) -- always be recording
+  end
   
   timer=metro.init()
   timer.time=60/params:get("clock_tempo")/16
@@ -77,7 +78,7 @@ function init()
   params:add_control("monitor","monitor",{"on","off"})
   
   -- position poll
-  softcut.phase_quant(1,0.025)
+  softcut.phase_quant(1,0.025) -- monitor one position to get both
   softcut.event_phase(update_positions)
   softcut.poll_start_phase()
 end
@@ -133,16 +134,17 @@ function activate_basic(monitor_mode)
     slew_rate=loop_length()
   end
   audio.level_monitor(monitor_mode)
-  softcut.rec(1,0) -- stop recording
-  softcut.level(1,1) -- start playing
-  softcut.position(1,prev_position)
-  softcut.loop_start(1,prev_position)
-  softcut.loop_end(1,current_position)
-  softcut.rate_slew_time(1,2*slew_rate)
-  softcut.level_slew_time(1,slew_rate)
-  softcut.pan_slew_time(1,slew_rate)
-  softcut.rate(1,param_final_rate)
-  softcut.level(1,param_final_level)
+  for i=1,2 do
+    softcut.rec(i,0) -- stop recording
+    softcut.level(i,1) -- start playing
+    softcut.position(i,prev_position)
+    softcut.loop_start(i,prev_position)
+    softcut.loop_end(i,current_position)
+    softcut.rate_slew_time(1,2*slew_rate)
+    softcut.level_slew_time(i,slew_rate)
+    softcut.rate(i,param_final_rate)
+    softcut.level(i,param_final_level)
+  end
   state_current_time=0
   state_repeat_number=0
   state_activated=true
@@ -153,15 +155,16 @@ function deactivate_basic()
   print("deactivated")
   state_activated=false
   audio.level_monitor(1)
-  softcut.rec(1,1) -- start recording
-  softcut.position(1,state_current_position+1)
-  softcut.loop_start(1,1)
-  softcut.loop_end(1,300)
-  softcut.rate_slew_time(1,0)
-  softcut.level_slew_time(1,0)
-  softcut.pan_slew_time(1,0)
-  softcut.rate(1,1)
-  softcut.level(1,1)
+  for i=1,2 do
+    softcut.rec(i,1) -- start recording
+    softcut.position(i,state_current_position+1)
+    softcut.loop_start(i,1)
+    softcut.loop_end(i,300)
+    softcut.rate_slew_time(i,0)
+    softcut.level_slew_time(i,0)
+    softcut.rate(i,1)
+    softcut.level(i,1)
+  end
   flag_update_screen=true
 end
 
@@ -193,7 +196,9 @@ function enc(n,d)
     else
       param_final_level=util.clamp(param_final_level+d/100,0,1)
       if state_activated then
-        softcut.level(1,param_final_level)
+        for i=1,2 do
+          softcut.level(i,param_final_level)
+        end
       end
     end
   elseif n==3 then
@@ -202,7 +207,9 @@ function enc(n,d)
     else
       param_final_rate=util.clamp(param_final_rate+d/100,-4,4)
       if state_activated then
-        softcut.rate(1,param_final_rate)
+        for i=1,2 do
+          softcut.rate(i,param_final_rate)
+        end
       end
     end
   end
