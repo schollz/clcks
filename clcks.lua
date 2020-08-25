@@ -31,10 +31,6 @@ state_tick=false
 
 flag_update_screen=false
 
-param_loop_num_beats=1
-param_final_rate=1
-param_final_level=1
-
 function init()
   audio.comp_mix(1) -- turn on compressor
   audio.level_adc_cut(1) -- send audio input to softcut input
@@ -67,16 +63,39 @@ function init()
   timer:start()
   
   -- parameters
+  params:set_action("clock_tempo",update_clock)
   params:add_control("beats","beats",controlspec.new(1,16,"lin",1,1))
   params:add_control("repeat","repeat",controlspec.new(1,10,"lin",1,3))
-  params:add_control("rate","rate",controlspec.new(-4,4,"lin",1,0.1))
+  params:add_control("rate","rate",controlspec.new(0,4,"lin",1,0.1))
+  params:set_action("rate",update_rate)
   params:add_control("level","level",controlspec.new(0,1,"lin",1,0.1))
+  params:set_action("level",update_level)
   params:add_control("randomizer","randomizer",{"on","off"})
   
   -- position poll
   softcut.phase_quant(1,0.025) -- monitor one position to get both
   softcut.event_phase(update_positions)
   softcut.poll_start_phase()
+end
+
+function update_clock(x)
+  timer.time=60/x/16
+end
+
+function update_level(x)
+  if state_activated then
+    for i=1,2 do
+      softcut.level(i,x)
+    end
+  end
+end
+
+function update_rate(x)
+  if state_activated then
+    for i=1,2 do
+      softcut.rate(i,x)
+    end
+  end
 end
 
 function update_positions(i,x)
@@ -97,7 +116,7 @@ function timer_update()
     
     -- get beat number
     current_beat_number=state_beat_number
-    state_beat_number=1+math.floor(state_current_time/(60/params:get("clock_tempo")/param_loop_num_beats))%param_loop_num_beats
+    state_beat_number=1+math.floor(state_current_time/(60/params:get("clock_tempo")/params:get("beats")))%params:get("beats")
     if state_beat_number~=current_beat_number then
       flag_update_screen=true
     end
@@ -112,7 +131,7 @@ function timer_update()
 end
 
 function loop_length()
-  return 60/params:get("clock_tempo")/param_loop_num_beats
+  return 60/params:get("clock_tempo")/params:get("beats")
 end
 
 function activate_basic(monitor_mode)
@@ -138,8 +157,8 @@ function activate_basic(monitor_mode)
     softcut.loop_end(i,current_position)
     softcut.rate_slew_time(1,2*slew_rate)
     softcut.level_slew_time(i,slew_rate)
-    softcut.rate(i,param_final_rate)
-    softcut.level(i,param_final_level)
+    softcut.rate(i,params:get("rate"))
+    softcut.level(i,params:get("level"))
   end
   state_current_time=0
   state_repeat_number=0
@@ -169,10 +188,10 @@ function randomizer()
   if params:get("randomizer")=="off" then
     do return end
   end
-  param_final_level=math.random(0,1)
-  param_final_rate=math.random(-4,4)
+  params:set("level",math.random(0,1))
+  params:set("rate",math.random(-4,4))
   params:set("repeat",round(math.random(1,5)))
-  param_loop_num_beats=round(math.random(1,8))
+  params:set("beats",round(math.random(1,8)))
   monitor_mode=round(math.random())
   flag_update_screen=true
   activate_basic(monitor_mode)
@@ -188,25 +207,14 @@ function enc(n,d)
   elseif n==2 then
     if state_shift then
       params:set("clock_tempo",util.clamp(params:get("clock_tempo")+d,10,500))
-      timer.time=60/params:get("clock_tempo")/16
     else
-      param_final_level=util.clamp(param_final_level+d/100,0,1)
-      if state_activated then
-        for i=1,2 do
-          softcut.level(i,param_final_level)
-        end
-      end
+      params:set("level",util.clamp(params:get("level")+d/100,0,1))
     end
   elseif n==3 then
     if state_shift then
-      param_loop_num_beats=util.clamp(param_loop_num_beats+d,1,16)
+      params:set("beats",util.clamp(params:get("beats")+d,1,16))
     else
-      param_final_rate=util.clamp(param_final_rate+d/100,-4,4)
-      if state_activated then
-        for i=1,2 do
-          softcut.rate(i,param_final_rate)
-        end
-      end
+      params:set("rate",util.clamp(params:get("rate")+d/100,0,4))
     end
   end
   flag_update_screen=true
@@ -217,8 +225,8 @@ function key(n,z)
     if state_shift then
       -- reset final parameters
       params:set("randomizer","off")
-      param_final_rate=1
-      param_final_level=1
+      params:set("rate",1)
+      params:set("level",1)
     else
       -- initiate with monitor mode
       activate_basic(1)
@@ -255,7 +263,7 @@ function redraw()
   x=34+shift_amount
   y=4+shift_amount
   w=3
-  show_beats=param_loop_num_beats
+  show_beats=params:get("beats")
   if state_activated then
     show_beats=current_beat_number
   end
@@ -279,16 +287,16 @@ function redraw()
     x=x+2
     screen.move(x,y)
     if i==params:get("repeat") then
-      screen.line(x+w*param_final_level,y+h)
+      screen.line(x+w*params:get("level"),y+h)
     elseif i==1 then
       screen.line(x+w,y+h)
     else
-      screen.line(x+w-w*(1-param_final_level)/(params:get("repeat")-1)*(i-1),y+h)
+      screen.line(x+w-w*(1-params:get("level"))/(params:get("repeat")-1)*(i-1),y+h)
     end
     screen.stroke()
     screen.move(x+w,y)
     r1=(-1*1+4)/8
-    r=(-1*param_final_rate+4)/8
+    r=(-1*params:get("rate")+4)/8
     if i==params:get("repeat") then
       screen.line(x+w*r,y+h)
     elseif i==1 then
