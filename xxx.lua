@@ -32,7 +32,6 @@ state_tick=false
 flag_update_screen=false
 
 param_randomizer="off"
-param_bpm=120
 param_loop_num_beats=1
 param_repeats=3 -- number of repeats
 param_final_rate=1
@@ -64,7 +63,7 @@ function init()
   softcut.rec(1,1) -- always be recording
   
   timer=metro.init()
-  timer.time=60/param_bpm/16
+  timer.time=60/params:get("clock_tempo")/16
   timer.count=-1
   timer.event=timer_update
   timer:start()
@@ -90,7 +89,7 @@ end
 function timer_update()
   if state_activated then
     state_current_time=state_current_time+const_time_per_refresh
-    state_tick=round(state_current_time/(60/param_bpm))%2==1
+    state_tick=round(state_current_time/(60/params:get("clock_tempo")))%2==1
     
     -- get repeat number
     current_repeat=state_repeat_number
@@ -101,7 +100,7 @@ function timer_update()
     
     -- get beat number
     current_beat_number=state_beat_number
-    state_beat_number=1+math.floor(state_current_time/(60/param_bpm/param_loop_num_beats))%param_loop_num_beats
+    state_beat_number=1+math.floor(state_current_time/(60/params:get("clock_tempo")/param_loop_num_beats))%param_loop_num_beats
     if state_beat_number~=current_beat_number then
       flag_update_screen=true
     end
@@ -116,7 +115,7 @@ function timer_update()
 end
 
 function loop_length()
-  return 60/param_bpm/param_loop_num_beats
+  return 60/params:get("clock_tempo")/param_loop_num_beats
 end
 
 function activate_basic(monitor_mode)
@@ -189,8 +188,8 @@ function enc(n,d)
     end
   elseif n==2 then
     if state_shift then
-      param_bpm=util.clamp(param_bpm+d,10,500)
-      timer.time=60/param_bpm/16
+      params:set("clock_tempo",util.clamp(params:get("clock_tempo")+d,10,500))
+      timer.time=60/params:get("clock_tempo")/16
     else
       param_final_level=util.clamp(param_final_level+d/100,0,1)
       if state_activated then
@@ -246,7 +245,7 @@ function redraw()
   
   -- draw bpm
   screen.move(3+shift_amount,8+shift_amount)
-  screen.text(param_bpm)
+  screen.text(params:get("clock_tempo"))
   metro_icon(16+shift_amount,3+shift_amount)
   
   -- draw beat subidivision boxes
