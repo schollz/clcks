@@ -32,6 +32,11 @@ other notes:
 
 - repeats >9 means infinite repeating, so you have to toggle off with K2 or K3
 
+## my other patches
+
+- [barcode](https://github.com/schollz/barcode): replays a buffer six times, at different levels & pans & rates & positions, modulated by lfos on every parameter.
+- [blndr](https://github.com/schollz/blndr): a quantized delay with time morphing
+
 ## license 
 
 mit 
