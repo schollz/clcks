@@ -37,6 +37,10 @@ other notes:
 
 - max repeats means infinite repeating, so you have to toggle off with K2 or K3
 
+## demo 
+
+<p align="center"><a href="https://www.instagram.com/p/CEWzDaXB6VX/"><img src="https://user-images.githubusercontent.com/6550035/91318286-e950e380-e76f-11ea-9394-178c7dfe8306.png" alt="Demo of playing" width=80%></a></p>
+
 ## my other patches
 
 - [barcode](https://github.com/schollz/barcode): replays a buffer six times, at different levels & pans & rates & positions, modulated by lfos on every parameter.
