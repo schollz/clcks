@@ -23,21 +23,22 @@
 
 state={
   activated=false,
-  time=0,
+  current_time=0,
   repeats=0,
   beat=0,
   position=0,
   shift=false,
   tick=false,
   update_screen=false,
+  timer_interval=0.02
 }
 
-params={
-  tempo=90,
+params_clcks={
+  tempo=125,
   level=1,
-  rate=1,
-  repeats=3,
-  subdivided=1,
+  rate=-1,
+  repeats=4,
+  subdivided=4,
   randomizer="off",
 }
 
@@ -66,8 +67,9 @@ function init()
   end
   
   -- initialize timer
+  params_clcks.timer_interval=60/params_clcks.tempo/16
   timer=metro.init()
-  timer.time=60/params.tempo/16
+  timer.time=params_clcks.timer_interval
   timer.count=-1
   timer.event=update_timer
   timer:start()
@@ -79,14 +81,10 @@ function init()
   softcut.poll_start_phase()
 end
 
-function update_clock(x)
-  timer.time=60/x/16
-end
-
 function update_level(x)
   if state.activated then
     for i=1,2 do
-      softcut.level(i,params.level)
+      softcut.level(i,params_clcks.level)
     end
   end
 end
@@ -94,7 +92,7 @@ end
 function update_rate(x)
   if state.activated then
     for i=1,2 do
-      softcut.rate(i,params.rate)
+      softcut.rate(i,params_clcks.rate)
     end
   end
 end
@@ -105,24 +103,27 @@ end
 
 function update_timer()
   if state.activated then
-    state.time=state.time+const_time_per_refresh
-    state.tick=round(state.time/(60/params.tempo))%2==1
+    -- update time position
+    state.current_time=state.current_time+params_clcks.timer_interval
+    
+    -- update tick
+    state.tick=round(state.current_time/(60/params_clcks.tempo))%2==1
     
     -- get repeat number
     current_repeat=state.repeats
-    state.repeats=math.floor(state.time/loop_length())
+    state.repeats=math.floor(state.current_time/loop_length())
     if state.repeats>current_repeat then
       state.update_screen=true
     end
     
     -- get beat number
     current_beat_number=state.beat
-    state.beat=1+math.floor(state.time/(loop_length()))%params.subdivided
+    state.beat=1+math.floor(state.current_time/(loop_length()))%params_clcks.subdivided
     if state.beat~=current_beat_number then
       state.update_screen=true
     end
     
-    if params.repeats<10 and state.time>=loop_length()*params.repeats then
+    if params_clcks.repeats<13 and state.current_time>=loop_length()*params_clcks.repeats then
       deactivate_basic()
     end
   end
@@ -132,7 +133,7 @@ function update_timer()
 end
 
 function loop_length()
-  return 60/params.tempo/params.subdivided
+  return 60/params_clcks.tempo/params_clcks.subdivided
 end
 
 function activate_basic(monitor_mode)
@@ -145,7 +146,7 @@ function activate_basic(monitor_mode)
   if prev_position<1 then
     prev_position=1
   end
-  slew_rate=params.repeats*loop_length()*4
+  slew_rate=params_clcks.repeats*loop_length()*4
   if slew_rate<0 then
     slew_rate=loop_length()
   end
@@ -156,12 +157,12 @@ function activate_basic(monitor_mode)
     softcut.position(i,prev_position)
     softcut.loop_start(i,prev_position)
     softcut.loop_end(i,current_position)
-    softcut.rate_slew_time(1,2*slew_rate)
+    softcut.rate_slew_time(i,2*slew_rate)
     softcut.level_slew_time(i,slew_rate)
-    softcut.rate(i,params.rate)
-    softcut.level(i,params.level)
+    softcut.rate(i,params_clcks.rate)
+    softcut.level(i,params_clcks.level)
   end
-  state.time=0
+  state.current_time=0
   state.repeats=0
   state.activated=true
   state.update_screen=true
@@ -181,18 +182,19 @@ function deactivate_basic()
     softcut.rate(i,1)
     softcut.level(i,1)
   end
+  softcut.buffer_clear()
   state.update_screen=true
 end
 
 function randomizer()
   clock.sleep(math.random(0,10))
-  if params.randomizer=="off" then
+  if params_clcks.randomizer=="off" then
     do return end
   end
-  params.level=math.random(0,1)
-  params.rate=math.random(-4,4)
-  params.repeats=round(math.random(1,5))
-  params.subdivided=round(math.random(1,8))
+  params_clcks.level=math.random(0,1)
+  params_clcks.rate=math.random(-4,4)
+  params_clcks.repeats=round(math.random(1,5))
+  params_clcks.subdivided=round(math.random(1,12))
   monitor_mode=round(math.random())
   state.update_screen=true
   activate_basic(monitor_mode)
@@ -203,22 +205,24 @@ function enc(n,d)
   if n==1 then
     if state.shift then
     else
-      params.repeats=util.clamp(params.repeats+d,1,10)
+      params_clcks.repeats=util.clamp(params_clcks.repeats+d,1,13)
     end
   elseif n==2 then
     if state.shift then
-      params.tempo=util.clamp(params.tempo+d,10,500)
+      params_clcks.tempo=util.clamp(params_clcks.tempo+d,10,500)
+      params_clcks.timer_interval=60/params_clcks.tempo/16
+      timer.time=params_clcks.timer_interval
     else
-      params.level=util.clamp(params.level+d/100,0,1)
+      params_clcks.level=util.clamp(params_clcks.level+d/100,0,1)
       update_level(0)
     end
   elseif n==3 then
     if state.shift then
-      params.subdivided=util.clamp(params.subdivided+d,1,16)
+      params_clcks.subdivided=util.clamp(params_clcks.subdivided+d,1,16)
     else
       -- turning ccw sets to reverse
       -- turning cw sets to forward
-      params.rate=sign(d)*math.abs(util.clamp(params.rate+d/100,-4,4))
+      params_clcks.rate=util.clamp(params_clcks.rate+d/100,-4,4)
       update_rate(0)
     end
   end
@@ -229,9 +233,9 @@ function key(n,z)
   if n==2 and z==1 then
     if state.shift then
       -- reset final parameters
-      params.randomizer="off"
-      params.rate=1
-      params.level=1
+      params_clcks.randomizer="off"
+      params_clcks.rate=1
+      params_clcks.level=1
     else
       -- initiate with monitor mode
       activate_basic(1)
@@ -239,7 +243,7 @@ function key(n,z)
   elseif n==3 and z==1 then
     if state.shift then
       -- randomize chop
-      params.randomizer="on"
+      params_clcks.randomizer="on"
       clock.run(randomizer)
     else
       -- initate without monitor mode
@@ -263,15 +267,15 @@ function redraw()
   end
   
   -- draw bpm
-  screen.move(3+shift_amount,8+shift_amount)
-  screen.text(params.tempo)
-  metro_icon(16+shift_amount,3+shift_amount)
+  screen.move(7+shift_amount,12+shift_amount)
+  screen.text(params_clcks.tempo)
+  metro_icon(20+shift_amount,7+shift_amount)
   
   -- draw beat subidivision boxes
-  x=34+shift_amount
-  y=4+shift_amount
+  x=38+shift_amount
+  y=8+shift_amount
   w=3
-  show_beats=params.subdivided
+  show_beats=params_clcks.subdivided
   if state.activated then
     show_beats=current_beat_number
   end
@@ -286,28 +290,27 @@ function redraw()
   x=2 -- x, y are the top left hand point
   y=20
   h=40
-  w=round(120/params.repeats)
-  show_repeats=params.repeats
+  w=round(120/params_clcks.repeats)
+  show_repeats=params_clcks.repeats
   if state.activated then
     show_repeats=state.repeats
   end
-  short_hand_angle=180*math.abs(params.rate)/4+90
-  rinitial=w/2
-  rfinal=w/2*params.level
-  print(params.level)
+  short_hand_angle=360*(params_clcks.rate+4)/8+90
+  rinitial=w/3
+  rfinal=rinitial*params_clcks.level
   for i=1,show_repeats do
     -- default: interpolate level between beginning and end
-    r=rinitial*(params.repeats-i)/(params.repeats-1)
-    r=r+rfinal*(1-(params.repeats-i)/(params.repeats-1))
+    r=rinitial*(params_clcks.repeats-i)/(params_clcks.repeats-1)
+    r=r+rfinal*(1-(params_clcks.repeats-i)/(params_clcks.repeats-1))
     if i==1 then
       r=rinitial
     elseif i==state.repeats then
       r=rfinal
     end
-    r=r+2
+    r=r*1.8
     
     -- draw ellipse with short radius showing interpolated level
-    center={x+w/2,y+w/2}
+    center={x+w/2,y+h/2}
     screen.move(center[1],y)
     screen.curve(center[1]-r,y,center[1]-r,y+h,center[1],y+h)
     screen.stroke()
@@ -322,14 +325,17 @@ function redraw()
     
     -- long hand indicates direction of rate
     angle=(i-1)*36
-    if params.rate>0 then
+    if params_clcks.rate>0 then
       angle=360-angle
     end
     angle=angle-180
-    angle=-1*angle
     
+    r0=r*0.75
+    if r0>h/2 then
+      r0=h/2*0.75
+    end
     screen.move(center[1],center[2])
-    screen.line(center[1]+r*math.sin(math.rad(angle)),center[2]+r*math.cos(math.rad(angle)))
+    screen.line(center[1]+r0*math.sin(math.rad(angle)),center[2]+r0*math.cos(math.rad(angle)))
     screen.stroke()
     
     -- update x position
