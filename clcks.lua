@@ -15,10 +15,9 @@
 --
 -- hold K1 to shift
 -- shift+E2 changes bpm
--- shift+E3 changes beat subdivision
+-- shift+E3 changes subdivision
 -- shift+K2 resets parameters
 -- shift+K3 randomizes
---
 --
 
 state={
