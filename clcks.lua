@@ -146,7 +146,7 @@ function activate_basic(monitor_mode)
   if prev_position<1 then
     prev_position=1
   end
-  slew_rate=params_clcks.repeats*loop_length()*4
+  slew_rate=params_clcks.repeats*loop_length()*3
   if slew_rate<0 then
     slew_rate=loop_length()
   end
