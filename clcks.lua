@@ -36,9 +36,9 @@ state={
 params_clcks={
   tempo=125,
   level=1,
-  rate=-1,
+  rate=1,
   repeats=4,
-  subdivided=4,
+  subdivided=2,
   randomizer="off",
 }
 
@@ -57,8 +57,8 @@ function init()
     softcut.loop_end(i,300)
     softcut.position(i,1)
     softcut.play(i,1)
-    softcut.rate_slew_time(i,0)
-    softcut.level_slew_time(i,0)
+    softcut.rate_slew_time(i,0.5)
+    softcut.level_slew_time(i,0.5)
     softcut.pan(i,(i-1)*2-1) --stereo
     softcut.rec_level(i,1.0)
     softcut.pre_level(i,0.0)
@@ -177,8 +177,8 @@ function deactivate_basic()
     softcut.position(i,state.position+1)
     softcut.loop_start(i,1)
     softcut.loop_end(i,300)
-    softcut.rate_slew_time(i,0)
-    softcut.level_slew_time(i,0)
+    softcut.rate_slew_time(i,0.5)
+    softcut.level_slew_time(i,0.5)
     softcut.rate(i,1)
     softcut.level(i,1)
   end
