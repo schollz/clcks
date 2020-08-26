@@ -37,12 +37,13 @@ params_clcks={
   tempo=125,
   level=1,
   rate=1,
-  repeats=4,
-  subdivided=2,
+  repeats=6,
+  subdivided=4,
   randomizer="off",
 }
 
 function init()
+  audio.monitor_stereo()
   audio.level_adc_cut(1) -- send audio input to softcut input
   audio.level_monitor(1)
   
