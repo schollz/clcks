@@ -4,7 +4,7 @@ punch-in tempo-locked repeating.
 
 ![image](https://user-images.githubusercontent.com/6550035/91256096-4a020100-e71b-11ea-82a6-3b2ef258fbec.gif)
 
-this is a tempo-locked repeater or "stutter" effect that can be punched-in during live performance. this effect is inspired by the op-1's chop" [tape trick](https://teenage.engineering/guides/op-1/tape-mode). i like "chop" but the op-1 stops the playing loop when this effect is activated. for *clcks* i wanted a similar effect that could be used live. using the pitch shift you can create all sorts of new tape effects too, live!
+this is a tempo-locked repeater or "stutter delay" effect that can be punched-in during live performance. this effect is inspired by the op-1's chop" [tape trick](https://teenage.engineering/guides/op-1/tape-mode). for *clcks* i wanted a similar tape trick effects that could be used live. using *clcks* and the pitch shift encoder you can create all sorts of repeats and tape speed-ups/slow-downs.
 
 future plans: 
 
