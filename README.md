@@ -29,7 +29,7 @@ future plans:
 - E2/E3 change final level/rate
 - hold K1 to shift
 - shift+E2 changes tempo
-- shift+E3 changes beat subdivision
+- shift+E3 changes subdivision
 - shift+K2 resets parameters
 - shift+K3 randomizes
 
